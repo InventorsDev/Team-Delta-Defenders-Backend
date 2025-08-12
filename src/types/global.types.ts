@@ -6,7 +6,7 @@ export type MongooseDocument<T> = T & Document;
 
 // User-related types
 export interface UserPayload {
-  userId: string;
+  id: string;
   role: UserRole;
 }
 

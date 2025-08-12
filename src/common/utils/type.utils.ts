@@ -1,6 +1,5 @@
 import { Types } from 'mongoose';
 import { type ObjectIdString } from '../../types/global.types';
-import { type UserRole } from '../../auth/schemas/user.schema';
 
 /**
  * Safely converts MongoDB ObjectId to string
@@ -53,16 +52,16 @@ export function getEnvVar(key: string, defaultValue?: string): string {
 /**
  * Safely extract properties from Mongoose document
  */
-export function extractUserData(user: any): {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-} {
+export const extractUserData = (user: any) => {
   return {
     id: toObjectIdString(user._id),
-    name: user.name,
+    name: user.fullName,
     email: user.email,
-    role: user.role as UserRole,
+    phone: user.phone,
+    state: user.state,
+    role: user.role,
+    ...(user.role === 'farmer' && { farmAddress: user.farmAddress }),
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
-}
+};

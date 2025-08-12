@@ -4,7 +4,7 @@ import { type ValidationError } from 'class-validator';
 export function createCustomValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     whitelist: true,
-    forbidNonWhitelisted: true,
+    forbidNonWhitelisted: false,
     transform: true,
     transformOptions: {
       enableImplicitConversion: true,

@@ -3,6 +3,8 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
+  Param,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -13,10 +15,13 @@ import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { SignUpDto } from './dto/sign-up.dto';
+import { FarmerSignUpDto } from './dto/farmer-signup.dto';
+import { BuyerSignUpDto } from './dto/buyer-signup.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateFarmerDto } from './dto/update-farmer.dto';
+import { UpdateBuyerDto } from './dto/update-buyer.dto';
 import { UserRole } from './schemas/user.schema';
 import type {
   AuthResponse,
@@ -29,11 +34,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // === Public routes ===
+
+  // Farmer signup
   @Public()
-  @Post('signup')
+  @Post('farmers/signup')
   @HttpCode(HttpStatus.CREATED)
-  async signUp(@Body() dto: SignUpDto): Promise<ApiResponse> {
-    return this.authService.signUp(dto.name, dto.email, dto.password, dto.role);
+  async farmerSignUp(@Body() dto: FarmerSignUpDto): Promise<ApiResponse> {
+    return this.authService.farmerSignUp(dto);
+  }
+
+  // Buyer signup
+  @Public()
+  @Post('buyers/signup')
+  @HttpCode(HttpStatus.CREATED)
+  async buyerSignUp(@Body() dto: BuyerSignUpDto): Promise<ApiResponse> {
+    return this.authService.buyerSignUp(dto);
   }
 
   @Public()
@@ -57,14 +72,88 @@ export class AuthController {
     return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
-  // === Protected route example ===
-  @Get('profile')
+  // === Protected routes ===
+
+  // Logout (token invalidation would be handled by frontend by removing token)
+  @Post('logout')
   @UseGuards(AuthGuard('jwt'))
-  getProfile(@CurrentUser() user: UserPayload): {
-    message: string;
-    user: UserPayload;
-  } {
-    return { message: 'Protected profile data', user };
+  @HttpCode(HttpStatus.OK)
+  logout(): ApiResponse {
+    return { message: 'Logged out successfully' };
+  }
+
+  // === Admin/General routes (can be accessed by both roles) ===
+
+  // Get all farmers
+  @Get('farmers')
+  @UseGuards(AuthGuard('jwt'))
+  async getAllFarmers(): Promise<{ farmers: any[] }> {
+    return this.authService.getAllFarmers();
+  }
+
+  // Get all buyers
+  @Get('buyers')
+  @UseGuards(AuthGuard('jwt'))
+  async getAllBuyers(): Promise<{ buyers: any[] }> {
+    return this.authService.getAllBuyers();
+  }
+
+  // Get single farmer by ID
+  @Get('farmers/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async getSingleFarmer(@Param('id') id: string): Promise<{ farmer: any }> {
+    return this.authService.getSingleFarmer(id);
+  }
+
+  // Get single buyer by ID
+  @Get('buyers/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async getSingleBuyer(@Param('id') id: string): Promise<{ buyer: any }> {
+    return this.authService.getSingleBuyer(id);
+  }
+
+  // === Role-based profile routes ===
+
+  // Get farmer profile (only for farmers)
+  @Get('farmers/profile/me')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.FARMER)
+  async getFarmerProfile(
+    @CurrentUser() user: UserPayload,
+  ): Promise<{ farmer: any }> {
+    return this.authService.getFarmerProfile(user.id);
+  }
+
+  // Get buyer profile (only for buyers)
+  @Get('buyers/profile/me')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.BUYER)
+  async getBuyerProfile(
+    @CurrentUser() user: UserPayload,
+  ): Promise<{ buyer: any }> {
+    return this.authService.getBuyerProfile(user.id);
+  }
+
+  // Update farmer profile (only for farmers)
+  @Patch('farmers/profile/me')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.FARMER)
+  async updateFarmerProfile(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: UpdateFarmerDto,
+  ): Promise<ApiResponse> {
+    return this.authService.updateFarmerProfile(user.id, dto);
+  }
+
+  // Update buyer profile (only for buyers)
+  @Patch('buyers/profile/me')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.BUYER)
+  async updateBuyerProfile(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: UpdateBuyerDto,
+  ): Promise<ApiResponse> {
+    return this.authService.updateBuyerProfile(user.id, dto);
   }
 
   // === Role-based protected routes ===
@@ -72,13 +161,13 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.FARMER)
   farmerDashboard(@CurrentUser() user: UserPayload): ApiResponse {
-    return { message: `Welcome to farmer dashboard, ${user.userId}!` };
+    return { message: `Welcome to farmer dashboard, ${user.id}!` };
   }
 
   @Get('buyer-dashboard')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.BUYER)
   buyerDashboard(@CurrentUser() user: UserPayload): ApiResponse {
-    return { message: `Welcome to buyer dashboard, ${user.userId}!` };
+    return { message: `Welcome to buyer dashboard, ${user.id}!` };
   }
 }

@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -10,6 +11,10 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { User, UserRole, UserDocument } from './schemas/user.schema';
+import { FarmerSignUpDto } from './dto/farmer-signup.dto';
+import { BuyerSignUpDto } from './dto/buyer-signup.dto';
+import { UpdateFarmerDto } from './dto/update-farmer.dto';
+import { UpdateBuyerDto } from './dto/update-buyer.dto';
 import type { AuthResponse, ApiResponse } from '../types/global.types';
 import {
   toObjectIdString,
@@ -24,28 +29,53 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(
-    name: string,
-    email: string,
-    password: string,
-    role: UserRole,
-  ): Promise<ApiResponse> {
-    const existingUser = await this.userModel.findOne({ email }).exec();
+  // Farmer signup
+  async farmerSignUp(dto: FarmerSignUpDto): Promise<ApiResponse> {
+    const existingUser = await this.userModel
+      .findOne({ email: dto.email })
+      .exec();
     if (existingUser) {
       throw new BadRequestException('Email already in use');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = new this.userModel({
-      name,
-      email,
+      fullName: dto.fullName,
+      phone: dto.phone,
+      email: dto.email,
+      state: dto.state,
+      farmAddress: dto.farmAddress,
       password: hashedPassword,
-      role,
+      role: UserRole.FARMER,
     });
 
     await user.save();
 
-    return { message: 'User registered successfully' };
+    return { message: 'Farmer registered successfully' };
+  }
+
+  // Buyer signup
+  async buyerSignUp(dto: BuyerSignUpDto): Promise<ApiResponse> {
+    const existingUser = await this.userModel
+      .findOne({ email: dto.email })
+      .exec();
+    if (existingUser) {
+      throw new BadRequestException('Email already in use');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const user = new this.userModel({
+      fullName: dto.fullName,
+      phone: dto.phone,
+      email: dto.email,
+      state: dto.state,
+      password: hashedPassword,
+      role: UserRole.BUYER,
+    });
+
+    await user.save();
+
+    return { message: 'Buyer registered successfully' };
   }
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
@@ -69,6 +99,130 @@ export class AuthService {
     return {
       token,
       user: extractUserData(user),
+    };
+  }
+
+  // Get all farmers
+  async getAllFarmers(): Promise<{ farmers: any[] }> {
+    const farmers = await this.userModel
+      .find({ role: UserRole.FARMER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    return { farmers: farmers.map((farmer) => extractUserData(farmer)) };
+  }
+
+  // Get all buyers
+  async getAllBuyers(): Promise<{ buyers: any[] }> {
+    const buyers = await this.userModel
+      .find({ role: UserRole.BUYER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    return { buyers: buyers.map((buyer) => extractUserData(buyer)) };
+  }
+
+  // Get single farmer by ID
+  async getSingleFarmer(id: string): Promise<{ farmer: any }> {
+    const farmer = await this.userModel
+      .findOne({ _id: id, role: UserRole.FARMER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!farmer) {
+      throw new NotFoundException('Farmer not found');
+    }
+
+    return { farmer: extractUserData(farmer) };
+  }
+
+  // Get single buyer by ID
+  async getSingleBuyer(id: string): Promise<{ buyer: any }> {
+    const buyer = await this.userModel
+      .findOne({ _id: id, role: UserRole.BUYER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!buyer) {
+      throw new NotFoundException('Buyer not found');
+    }
+
+    return { buyer: extractUserData(buyer) };
+  }
+
+  // Get farmer profile
+  async getFarmerProfile(userId: string): Promise<{ farmer: any }> {
+    const farmer = await this.userModel
+      .findOne({ _id: userId, role: UserRole.FARMER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!farmer) {
+      throw new NotFoundException('Farmer profile not found');
+    }
+
+    return { farmer: extractUserData(farmer) };
+  }
+
+  // Get buyer profile
+  async getBuyerProfile(userId: string): Promise<{ buyer: any }> {
+    const buyer = await this.userModel
+      .findOne({ _id: userId, role: UserRole.BUYER })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!buyer) {
+      throw new NotFoundException('Buyer profile not found');
+    }
+
+    return { buyer: extractUserData(buyer) };
+  }
+
+  // Update farmer profile
+  async updateFarmerProfile(
+    userId: string,
+    dto: UpdateFarmerDto,
+  ): Promise<ApiResponse> {
+    const farmer = await this.userModel
+      .findOneAndUpdate(
+        { _id: userId, role: UserRole.FARMER },
+        { $set: dto },
+        { new: true },
+      )
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!farmer) {
+      throw new NotFoundException('Farmer not found');
+    }
+
+    return {
+      message: 'Farmer profile updated successfully',
+      data: extractUserData(farmer),
+    };
+  }
+
+  // Update buyer profile
+  async updateBuyerProfile(
+    userId: string,
+    dto: UpdateBuyerDto,
+  ): Promise<ApiResponse> {
+    const buyer = await this.userModel
+      .findOneAndUpdate(
+        { _id: userId, role: UserRole.BUYER },
+        { $set: dto },
+        { new: true },
+      )
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
+    if (!buyer) {
+      throw new NotFoundException('Buyer not found');
+    }
+
+    return {
+      message: 'Buyer profile updated successfully',
+      data: extractUserData(buyer),
     };
   }
 
