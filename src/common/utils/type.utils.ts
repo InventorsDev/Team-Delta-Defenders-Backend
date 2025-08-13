@@ -59,8 +59,8 @@ export const extractUserData = (user: any) => {
     email: user.email,
     phone: user.phone,
     state: user.state,
-    role: user.role,
-    ...(user.role === 'farmer' && { farmAddress: user.farmAddress }),
+    role: user.currentRole,
+    ...(user.currentRole === 'farmer' && { farmAddress: user.farmAddress }),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

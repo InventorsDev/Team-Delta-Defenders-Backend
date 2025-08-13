@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EnvironmentConfig } from './common/config/environment.config';
 import { getEnvVar } from './common/utils/type.utils';
+import { ListingModule } from './Listing/listing.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { getEnvVar } from './common/utils/type.utils';
       getEnvVar('DATABASE_URL', 'mongodb://localhost:27017/agrilink'),
     ),
     AuthModule,
+    ListingModule,
   ],
   controllers: [AppController],
   providers: [

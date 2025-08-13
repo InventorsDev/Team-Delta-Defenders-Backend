@@ -3,6 +3,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -15,6 +16,11 @@ import { FarmerSignUpDto } from './dto/farmer-signup.dto';
 import { BuyerSignUpDto } from './dto/buyer-signup.dto';
 import { UpdateFarmerDto } from './dto/update-farmer.dto';
 import { UpdateBuyerDto } from './dto/update-buyer.dto';
+import {
+  SwitchRoleDto,
+  CreateFarmerRoleDto,
+  CreateBuyerRoleDto,
+} from './dto/switch-role.dto';
 import type { AuthResponse, ApiResponse } from '../types/global.types';
 import {
   toObjectIdString,
@@ -29,11 +35,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Farmer signup
+  // Farmer signup - creates initial account with farmer role
   async farmerSignUp(dto: FarmerSignUpDto): Promise<ApiResponse> {
     const existingUser = await this.userModel
       .findOne({ email: dto.email })
       .exec();
+
     if (existingUser) {
       throw new BadRequestException('Email already in use');
     }
@@ -44,21 +51,24 @@ export class AuthService {
       phone: dto.phone,
       email: dto.email,
       state: dto.state,
-      farmAddress: dto.farmAddress,
       password: hashedPassword,
-      role: UserRole.FARMER,
+      roles: [UserRole.FARMER],
+      currentRole: UserRole.FARMER,
+      farmerData: {
+        farmAddress: dto.farmAddress,
+      },
     });
 
     await user.save();
-
     return { message: 'Farmer registered successfully' };
   }
 
-  // Buyer signup
+  // Buyer signup - creates initial account with buyer role
   async buyerSignUp(dto: BuyerSignUpDto): Promise<ApiResponse> {
     const existingUser = await this.userModel
       .findOne({ email: dto.email })
       .exec();
+
     if (existingUser) {
       throw new BadRequestException('Email already in use');
     }
@@ -70,14 +80,16 @@ export class AuthService {
       email: dto.email,
       state: dto.state,
       password: hashedPassword,
-      role: UserRole.BUYER,
+      roles: [UserRole.BUYER],
+      currentRole: UserRole.BUYER,
+      buyerData: {},
     });
 
     await user.save();
-
     return { message: 'Buyer registered successfully' };
   }
 
+  // User sign in
   async signIn(email: string, password: string): Promise<AuthResponse> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
@@ -91,21 +103,176 @@ export class AuthService {
 
     const payload = {
       sub: toObjectIdString(user._id),
-      role: user.role,
+      role: user.currentRole,
     };
 
     const token = this.jwtService.sign(payload);
 
     return {
       token,
-      user: extractUserData(user),
+      user: {
+        ...extractUserData(user),
+        availableRoles: user.roles,
+        currentRole: user.currentRole,
+      },
+    };
+  }
+
+  // Switch between existing roles
+  async switchRole(userId: string, dto: SwitchRoleDto): Promise<AuthResponse> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.roles.includes(dto.role)) {
+      throw new BadRequestException(
+        `You don't have access to ${dto.role} role. Please create the role first.`,
+      );
+    }
+
+    user.currentRole = dto.role;
+    await user.save();
+
+    const payload = {
+      sub: toObjectIdString(user._id),
+      role: user.currentRole,
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        ...extractUserData(user),
+        availableRoles: user.roles,
+        currentRole: user.currentRole,
+      },
+    };
+  }
+
+  // Create additional farmer role for existing user
+  async createFarmerRole(
+    userId: string,
+    dto: CreateFarmerRoleDto,
+  ): Promise<AuthResponse> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(dto.password, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    if (user.roles.includes(UserRole.FARMER)) {
+      throw new ConflictException(
+        'Farmer role already exists for this account',
+      );
+    }
+
+    // Add farmer role and data
+    user.roles.push(UserRole.FARMER);
+    user.farmerData = {
+      farmAddress: dto.farmAddress,
+      cropTypes: dto.cropTypes,
+      businessName: dto.businessName,
+    };
+
+    // Switch to the new role
+    user.currentRole = UserRole.FARMER;
+    await user.save();
+
+    const payload = {
+      sub: toObjectIdString(user._id),
+      role: user.currentRole,
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        ...extractUserData(user),
+        availableRoles: user.roles,
+        currentRole: user.currentRole,
+      },
+    };
+  }
+
+  // Create additional buyer role for existing user
+  async createBuyerRole(
+    userId: string,
+    dto: CreateBuyerRoleDto,
+  ): Promise<AuthResponse> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(dto.password, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    if (user.roles.includes(UserRole.BUYER)) {
+      throw new ConflictException('Buyer role already exists for this account');
+    }
+
+    // Add buyer role and data
+    user.roles.push(UserRole.BUYER);
+    user.buyerData = {
+      houseAddress: dto.houseAddress,
+      businessType: dto.businessType,
+    };
+
+    // Switch to the new role
+    user.currentRole = UserRole.BUYER;
+    await user.save();
+
+    const payload = {
+      sub: toObjectIdString(user._id),
+      role: user.currentRole,
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        ...extractUserData(user),
+        availableRoles: user.roles,
+        currentRole: user.currentRole,
+      },
+    };
+  }
+
+  // Get user's available roles
+  async getUserRoles(
+    userId: string,
+  ): Promise<{ availableRoles: UserRole[]; currentRole: UserRole }> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('roles currentRole')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      availableRoles: user.roles,
+      currentRole: user.currentRole,
     };
   }
 
   // Get all farmers
   async getAllFarmers(): Promise<{ farmers: any[] }> {
     const farmers = await this.userModel
-      .find({ role: UserRole.FARMER })
+      .find({ roles: UserRole.FARMER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -115,7 +282,7 @@ export class AuthService {
   // Get all buyers
   async getAllBuyers(): Promise<{ buyers: any[] }> {
     const buyers = await this.userModel
-      .find({ role: UserRole.BUYER })
+      .find({ roles: UserRole.BUYER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -125,7 +292,7 @@ export class AuthService {
   // Get single farmer by ID
   async getSingleFarmer(id: string): Promise<{ farmer: any }> {
     const farmer = await this.userModel
-      .findOne({ _id: id, role: UserRole.FARMER })
+      .findOne({ _id: id, roles: UserRole.FARMER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -139,7 +306,7 @@ export class AuthService {
   // Get single buyer by ID
   async getSingleBuyer(id: string): Promise<{ buyer: any }> {
     const buyer = await this.userModel
-      .findOne({ _id: id, role: UserRole.BUYER })
+      .findOne({ _id: id, roles: UserRole.BUYER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -153,7 +320,7 @@ export class AuthService {
   // Get farmer profile
   async getFarmerProfile(userId: string): Promise<{ farmer: any }> {
     const farmer = await this.userModel
-      .findOne({ _id: userId, role: UserRole.FARMER })
+      .findOne({ _id: userId, roles: UserRole.FARMER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -167,7 +334,7 @@ export class AuthService {
   // Get buyer profile
   async getBuyerProfile(userId: string): Promise<{ buyer: any }> {
     const buyer = await this.userModel
-      .findOne({ _id: userId, role: UserRole.BUYER })
+      .findOne({ _id: userId, roles: UserRole.BUYER })
       .select('-password -resetPasswordToken -resetPasswordExpires')
       .exec();
 
@@ -183,22 +350,33 @@ export class AuthService {
     userId: string,
     dto: UpdateFarmerDto,
   ): Promise<ApiResponse> {
-    const farmer = await this.userModel
-      .findOneAndUpdate(
-        { _id: userId, role: UserRole.FARMER },
-        { $set: dto },
-        { new: true },
-      )
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+    const user = await this.userModel
+      .findOne({ _id: userId, roles: UserRole.FARMER })
       .exec();
 
-    if (!farmer) {
+    if (!user) {
       throw new NotFoundException('Farmer not found');
     }
 
+    // Update general fields
+    const updateFields: any = {};
+    if (dto.fullName) updateFields.fullName = dto.fullName;
+    if (dto.phone) updateFields.phone = dto.phone;
+    if (dto.state) updateFields.state = dto.state;
+
+    // Update farmer-specific data
+    if (dto.farmAddress) {
+      updateFields['farmerData.farmAddress'] = dto.farmAddress;
+    }
+
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
     return {
       message: 'Farmer profile updated successfully',
-      data: extractUserData(farmer),
+      data: extractUserData(updatedUser!),
     };
   }
 
@@ -207,37 +385,43 @@ export class AuthService {
     userId: string,
     dto: UpdateBuyerDto,
   ): Promise<ApiResponse> {
-    const buyer = await this.userModel
-      .findOneAndUpdate(
-        { _id: userId, role: UserRole.BUYER },
-        { $set: dto },
-        { new: true },
-      )
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+    const user = await this.userModel
+      .findOne({ _id: userId, roles: UserRole.BUYER })
       .exec();
 
-    if (!buyer) {
+    if (!user) {
       throw new NotFoundException('Buyer not found');
     }
 
+    // Update general fields
+    const updateFields: any = {};
+    if (dto.fullName) updateFields.fullName = dto.fullName;
+    if (dto.phone) updateFields.phone = dto.phone;
+    if (dto.state) updateFields.state = dto.state;
+
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .exec();
+
     return {
       message: 'Buyer profile updated successfully',
-      data: extractUserData(buyer),
+      data: extractUserData(updatedUser!),
     };
   }
 
+  // Existing methods remain the same
   async forgotPassword(email: string): Promise<ApiResponse> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
       throw new BadRequestException('No user found with this email');
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = await bcrypt.hash(resetToken, 10);
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
 
     await this.sendResetEmail(user.email, resetToken);
