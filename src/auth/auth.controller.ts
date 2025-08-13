@@ -22,6 +22,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateFarmerDto } from './dto/update-farmer.dto';
 import { UpdateBuyerDto } from './dto/update-buyer.dto';
+import { SwitchRoleDto } from './dto/switch-role.dto';
 import { UserRole } from './schemas/user.schema';
 import type {
   AuthResponse,
@@ -80,6 +81,29 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(): ApiResponse {
     return { message: 'Logged out successfully' };
+  }
+
+  // === Switch Account Feature Routes ===
+
+  // Get user's available roles and current role
+  @Get('roles')
+  @UseGuards(AuthGuard('jwt'))
+  async getUserRoles(@CurrentUser() user: UserPayload): Promise<{
+    availableRoles: UserRole[];
+    currentRole: UserRole;
+  }> {
+    return this.authService.getUserRoles(user.id);
+  }
+
+  // Switch between existing roles
+  @Post('switch-role')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async switchRole(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: SwitchRoleDto,
+  ): Promise<AuthResponse> {
+    return this.authService.switchRole(user.id, dto);
   }
 
   // === Admin/General routes (can be accessed by both roles) ===

@@ -7,6 +7,32 @@ export enum UserRole {
   BUYER = 'buyer',
 }
 
+// Sub-schema for farmer-specific data
+@Schema({ _id: false })
+export class FarmerData {
+  @Prop({ required: true })
+  farmAddress!: string;
+
+  @Prop()
+  cropTypes?: string[];
+
+  @Prop()
+  businessName?: string;
+}
+
+// Sub-schema for buyer-specific data
+@Schema({ _id: false })
+export class BuyerData {
+  @Prop({ required: false })
+  houseAddress?: string;
+
+  @Prop({ required: false })
+  businessType?: string;
+}
+
+const FarmerDataSchema = SchemaFactory.createForClass(FarmerData);
+const BuyerDataSchema = SchemaFactory.createForClass(BuyerData);
+
 @Schema({ timestamps: true })
 export class User {
   _id!: Types.ObjectId;
@@ -26,16 +52,25 @@ export class User {
   @Prop({ required: true })
   state!: string;
 
-  @Prop({ enum: UserRole, required: true })
-  role!: UserRole;
-
-  // Farmer-specific field
+  // Array of roles this user has access to
   @Prop({
-    required: function () {
-      return this.role === UserRole.FARMER;
-    },
+    type: [String],
+    enum: UserRole,
+    required: true,
+    default: [],
   })
-  farmAddress?: string;
+  roles!: UserRole[];
+
+  // Current active role
+  @Prop({ enum: UserRole, required: true })
+  currentRole!: UserRole;
+
+  // Role-specific data
+  @Prop({ type: FarmerDataSchema })
+  farmerData?: FarmerData;
+
+  @Prop({ type: BuyerDataSchema })
+  buyerData?: BuyerData;
 
   @Prop()
   resetPasswordToken?: string;
@@ -49,11 +84,29 @@ export class User {
 
 export type UserDocument = User & Document;
 
-// Add instance method to schema after creation
 export const UserSchema = SchemaFactory.createForClass(User);
 
+// Instance methods
 UserSchema.methods.validatePassword = async function (
   password: string,
 ): Promise<boolean> {
   return bcrypt.compare(password, this.password);
+};
+
+UserSchema.methods.hasRole = function (role: UserRole): boolean {
+  return this.roles.includes(role);
+};
+
+UserSchema.methods.addRole = function (role: UserRole): void {
+  if (!this.hasRole(role)) {
+    this.roles.push(role);
+  }
+};
+
+UserSchema.methods.switchRole = function (role: UserRole): boolean {
+  if (this.hasRole(role)) {
+    this.currentRole = role;
+    return true;
+  }
+  return false;
 };

@@ -24,6 +24,8 @@ export interface AuthResponse {
     name: string;
     email: string;
     role: UserRole;
+    availableRoles: UserRole[];
+    currentRole: UserRole;
   };
 }
 

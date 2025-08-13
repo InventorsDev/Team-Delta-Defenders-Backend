@@ -4,6 +4,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { createCustomValidationPipe } from './common/pipes/validation.pipe';
 import { EnvironmentConfig } from './common/config/environment.config';
 import { config } from 'dotenv';
+import type { NestExpressApplication } from '@nestjs/platform-express'; // Changed to import type
+import { join } from 'path';
 
 // Load environment variables from .env file
 config({ path: '.env' });
@@ -13,7 +15,7 @@ console.log('Environment Variables:', {
 });
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Get environment config
   const envConfig = app.get(EnvironmentConfig);
@@ -21,6 +23,11 @@ async function bootstrap(): Promise<void> {
   // Global middleware and filters
   app.useGlobalPipes(createCustomValidationPipe());
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Serve static files
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads',
+  });
 
   // CORS configuration
   app.enableCors({
