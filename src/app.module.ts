@@ -9,12 +9,19 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EnvironmentConfig } from './common/config/environment.config';
 import { getEnvVar } from './common/utils/type.utils';
 import { ListingModule } from './Listing/listing.module';
+import { MessagesModule } from './messages/messages.module';
+import { ConversationsModule } from './conversations/conversation.module';
+
+
 
 @Module({
   imports: [
+     MessagesModule,
+     ConversationsModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
+      
     }),
     MongooseModule.forRoot(
       getEnvVar('DATABASE_URL', 'mongodb://localhost:27017/agrilink'),
