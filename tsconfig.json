@@ -18,6 +18,7 @@
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
+<<<<<<< HEAD
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
@@ -30,4 +31,10 @@
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
+=======
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
 }

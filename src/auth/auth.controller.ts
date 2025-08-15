@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   Body,
   Controller,
@@ -29,11 +30,16 @@ import type {
   ApiResponse,
   UserPayload,
 } from '../types/global.types';
+=======
+import { Controller, Post, Body } from '@nestjs/common';
+import { AuthService } from './auth.service';
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+<<<<<<< HEAD
   // === Public routes ===
 
   // Farmer signup
@@ -193,5 +199,22 @@ export class AuthController {
   @Roles(UserRole.BUYER)
   buyerDashboard(@CurrentUser() user: UserPayload): ApiResponse {
     return { message: `Welcome to buyer dashboard, ${user.id}!` };
+=======
+  @Post('register')
+  async register(
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.register(name, email, password);
+  }
+
+  @Post('login')
+  async login(
+    @Body('email') email: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.login(email, password);
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
   }
 }

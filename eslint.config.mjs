@@ -6,7 +6,11 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
+<<<<<<< HEAD
     ignores: ['eslint.config.mjs', 'dist/**/*', 'node_modules/**/*'],
+=======
+    ignores: ['eslint.config.mjs'],
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -26,6 +30,7 @@ export default tseslint.config(
   },
   {
     rules: {
+<<<<<<< HEAD
       // Existing rules
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
@@ -103,6 +108,11 @@ export default tseslint.config(
     rules: {
       // Main files can have console logs
       'no-console': 'off',
+=======
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn'
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
     },
   },
 );

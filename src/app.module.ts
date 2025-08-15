@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+<<<<<<< HEAD
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -37,6 +38,15 @@ import { ConversationsModule } from './conversations/conversation.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+=======
+import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './auth/auth.module';
+
+@Module({
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost/agrilink'),
+    AuthModule,
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
   ],
 })
 export class AppModule {}

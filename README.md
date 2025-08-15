@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 # Team-Delta-Defenders-Backend
+=======
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>

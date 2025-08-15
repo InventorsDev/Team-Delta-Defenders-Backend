@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   Injectable,
   BadRequestException,
@@ -27,10 +28,17 @@ import {
   extractUserData,
   getEnvVar,
 } from '../common/utils/type.utils';
+=======
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { UserService } from '../users/user.service';
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
 
 @Injectable()
 export class AuthService {
   constructor(
+<<<<<<< HEAD
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
   ) {}
@@ -480,5 +488,34 @@ export class AuthService {
         <p>This link will expire in 1 hour.</p>
       `,
     });
+=======
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async register(name: string, email: string, password: string) {
+    const existingUser = await this.userService.findByEmail(email);
+    if (existingUser) throw new ConflictException('Email already in use');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await this.userService.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    return { message: 'User registered successfully', userId: newUser._id.toString() };
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+
+    const payload = { sub: user._id.toString(), email: user.email };
+    return { access_token: this.jwtService.sign(payload) };
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
   }
 }

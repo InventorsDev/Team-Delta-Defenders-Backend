@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+<<<<<<< HEAD
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { createCustomValidationPipe } from './common/pipes/validation.pipe';
 import { EnvironmentConfig } from './common/config/environment.config';
@@ -48,3 +49,12 @@ bootstrap().catch((error) => {
   console.error('Error starting application:', error);
   process.exit(1);
 });
+=======
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+await app.listen(3000);
+console.log('App is running on http://localhost:3000');
+}
+bootstrap();
+>>>>>>> 83c413f657eb2717b3f8d8936d913c3092d5a736
