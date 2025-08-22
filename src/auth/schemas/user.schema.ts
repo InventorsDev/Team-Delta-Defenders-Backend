@@ -14,20 +14,14 @@ export class FarmerData {
   farmAddress!: string;
 
   @Prop()
-  cropTypes?: string[];
-
-  @Prop()
   businessName?: string;
 }
 
 // Sub-schema for buyer-specific data
 @Schema({ _id: false })
 export class BuyerData {
-  @Prop({ required: false })
-  houseAddress?: string;
-
-  @Prop({ required: false })
-  businessType?: string;
+  @Prop({ required: true })
+  houseAddress!: string;
 }
 
 const FarmerDataSchema = SchemaFactory.createForClass(FarmerData);
@@ -52,12 +46,19 @@ export class User {
   @Prop({ required: true })
   state!: string;
 
-  // Array of roles this user has access to
+  // Array of roles this user has access to (max 2: buyer and farmer)
   @Prop({
     type: [String],
     enum: UserRole,
     required: true,
     default: [],
+    validate: {
+      validator: function (roles: UserRole[]) {
+        // Ensure no more than 2 roles and no duplicates
+        return roles.length <= 2 && new Set(roles).size === roles.length;
+      },
+      message: 'User can have maximum 2 unique roles',
+    },
   })
   roles!: UserRole[];
 
@@ -98,7 +99,7 @@ UserSchema.methods.hasRole = function (role: UserRole): boolean {
 };
 
 UserSchema.methods.addRole = function (role: UserRole): void {
-  if (!this.hasRole(role)) {
+  if (!this.hasRole(role) && this.roles.length < 2) {
     this.roles.push(role);
   }
 };
@@ -109,4 +110,15 @@ UserSchema.methods.switchRole = function (role: UserRole): boolean {
     return true;
   }
   return false;
+};
+
+UserSchema.methods.canCreateRole = function (): UserRole | null {
+  if (this.roles.length === 1) {
+    if (this.roles.includes(UserRole.BUYER)) {
+      return UserRole.FARMER;
+    } else if (this.roles.includes(UserRole.FARMER)) {
+      return UserRole.BUYER;
+    }
+  }
+  return null;
 };

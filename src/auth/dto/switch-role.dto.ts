@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { UserRole } from '../schemas/user.schema';
 
 export class SwitchRoleDto {
@@ -7,26 +7,54 @@ export class SwitchRoleDto {
   role!: UserRole;
 }
 
-export class CreateAdditionalRoleDto {
-  @IsEnum(UserRole)
+// For creating additional farmer role
+export class CreateFarmerRoleDto {
   @IsNotEmpty()
-  role!: UserRole;
-
-  @IsNotEmpty()
+  @IsString()
   password!: string;
-}
 
-// For farmer role creation
-export class CreateFarmerRoleDto extends CreateAdditionalRoleDto {
   @IsNotEmpty()
+  @IsString()
   farmAddress!: string;
 
-  cropTypes?: string[];
+  @IsOptional()
+  @IsString()
   businessName?: string;
+
+  // Allow updating of general fields during role creation
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
 }
 
-// For buyer role creation - can be extended with buyer-specific fields
-export class CreateBuyerRoleDto extends CreateAdditionalRoleDto {
-  houseAddress?: string;
-  businessType?: string;
+// For creating additional buyer role
+export class CreateBuyerRoleDto {
+  @IsNotEmpty()
+  @IsString()
+  password!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  houseAddress!: string;
+
+  // Allow updating of general fields during role creation
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
 }

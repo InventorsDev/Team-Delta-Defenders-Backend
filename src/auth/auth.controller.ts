@@ -22,7 +22,11 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateFarmerDto } from './dto/update-farmer.dto';
 import { UpdateBuyerDto } from './dto/update-buyer.dto';
-import { SwitchRoleDto } from './dto/switch-role.dto';
+import {
+  SwitchRoleDto,
+  CreateFarmerRoleDto,
+  CreateBuyerRoleDto,
+} from './dto/switch-role.dto';
 import { UserRole } from './schemas/user.schema';
 import type {
   AuthResponse,
@@ -91,6 +95,7 @@ export class AuthController {
   async getUserRoles(@CurrentUser() user: UserPayload): Promise<{
     availableRoles: UserRole[];
     currentRole: UserRole;
+    canCreateRole?: UserRole; // The role they can create (if any)
   }> {
     return this.authService.getUserRoles(user.id);
   }
@@ -104,6 +109,28 @@ export class AuthController {
     @Body() dto: SwitchRoleDto,
   ): Promise<AuthResponse> {
     return this.authService.switchRole(user.id, dto);
+  }
+
+  // Create additional farmer role (for existing buyers)
+  @Post('create-farmer-role')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.CREATED)
+  async createFarmerRole(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: CreateFarmerRoleDto,
+  ): Promise<AuthResponse> {
+    return this.authService.createFarmerRole(user.id, dto);
+  }
+
+  // Create additional buyer role (for existing farmers)
+  @Post('create-buyer-role')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.CREATED)
+  async createBuyerRole(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: CreateBuyerRoleDto,
+  ): Promise<AuthResponse> {
+    return this.authService.createBuyerRole(user.id, dto);
   }
 
   // === Admin/General routes (can be accessed by both roles) ===

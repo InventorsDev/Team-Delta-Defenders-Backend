@@ -167,19 +167,42 @@ export class AuthService {
       throw new UnauthorizedException('Invalid password');
     }
 
+    // Check if user already has farmer role
     if (user.roles.includes(UserRole.FARMER)) {
       throw new ConflictException(
         'Farmer role already exists for this account',
       );
     }
 
+    // Check if user already has the maximum allowed roles (2)
+    if (user.roles.length >= 2) {
+      throw new BadRequestException(
+        'You already have the maximum number of roles (2)',
+      );
+    }
+
+    // Only allow buyers to create farmer roles
+    if (!user.roles.includes(UserRole.BUYER)) {
+      throw new BadRequestException(
+        'Only buyers can create additional farmer roles',
+      );
+    }
+
+    // Update user fields if provided
+    const updateFields: any = {};
+    if (dto.fullName) updateFields.fullName = dto.fullName;
+    if (dto.phone) updateFields.phone = dto.phone;
+    if (dto.state) updateFields.state = dto.state;
+
     // Add farmer role and data
     user.roles.push(UserRole.FARMER);
     user.farmerData = {
       farmAddress: dto.farmAddress,
-      cropTypes: dto.cropTypes,
       businessName: dto.businessName,
     };
+
+    // Apply general field updates
+    Object.assign(user, updateFields);
 
     // Switch to the new role
     user.currentRole = UserRole.FARMER;
@@ -218,16 +241,39 @@ export class AuthService {
       throw new UnauthorizedException('Invalid password');
     }
 
+    // Check if user already has buyer role
     if (user.roles.includes(UserRole.BUYER)) {
       throw new ConflictException('Buyer role already exists for this account');
     }
+
+    // Check if user already has the maximum allowed roles (2)
+    if (user.roles.length >= 2) {
+      throw new BadRequestException(
+        'You already have the maximum number of roles (2)',
+      );
+    }
+
+    // Only allow farmers to create buyer roles
+    if (!user.roles.includes(UserRole.FARMER)) {
+      throw new BadRequestException(
+        'Only farmers can create additional buyer roles',
+      );
+    }
+
+    // Update user fields if provided
+    const updateFields: any = {};
+    if (dto.fullName) updateFields.fullName = dto.fullName;
+    if (dto.phone) updateFields.phone = dto.phone;
+    if (dto.state) updateFields.state = dto.state;
 
     // Add buyer role and data
     user.roles.push(UserRole.BUYER);
     user.buyerData = {
       houseAddress: dto.houseAddress,
-      businessType: dto.businessType,
     };
+
+    // Apply general field updates
+    Object.assign(user, updateFields);
 
     // Switch to the new role
     user.currentRole = UserRole.BUYER;
@@ -250,10 +296,12 @@ export class AuthService {
     };
   }
 
-  // Get user's available roles
-  async getUserRoles(
-    userId: string,
-  ): Promise<{ availableRoles: UserRole[]; currentRole: UserRole }> {
+  // Get user's available roles and what role they can create
+  async getUserRoles(userId: string): Promise<{
+    availableRoles: UserRole[];
+    currentRole: UserRole;
+    canCreateRole?: UserRole;
+  }> {
     const user = await this.userModel
       .findById(userId)
       .select('roles currentRole')
@@ -263,9 +311,21 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
+    let canCreateRole: UserRole | undefined;
+
+    // Determine what role they can create (if any)
+    if (user.roles.length === 1) {
+      if (user.roles.includes(UserRole.BUYER)) {
+        canCreateRole = UserRole.FARMER;
+      } else if (user.roles.includes(UserRole.FARMER)) {
+        canCreateRole = UserRole.BUYER;
+      }
+    }
+
     return {
       availableRoles: user.roles,
       currentRole: user.currentRole,
+      canCreateRole,
     };
   }
 
