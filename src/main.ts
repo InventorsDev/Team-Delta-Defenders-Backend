@@ -38,7 +38,8 @@ async function bootstrap(): Promise<void> {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  const port = envConfig.port;
+  //Use Render PORT if available
+  const port = process.env.PORT || envConfig.port || 3000;
   await app.listen(port);
 
   console.log(`Application is running on: http://localhost:${port}/api`);
