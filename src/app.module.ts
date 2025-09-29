@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { UserModule } from './users/user.module';
+import { ConversationsModule } from './conversations/conversation.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EnvironmentConfig } from './common/config/environment.config';
 import { getEnvVar } from './common/utils/type.utils';
@@ -20,16 +22,19 @@ import { ListingModule } from './Listing/listing.module';
       getEnvVar('DATABASE_URL', 'mongodb://localhost:27017/agrilink'),
     ),
     AuthModule,
+    UserModule,
     ListingModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     EnvironmentConfig,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
+    // Uncomment the following lines to enable global JWT authentication guard
+    //{
+    //   provide: APP_GUARD,
+    //   useClass: JwtAuthGuard,
+    // },
   ],
 })
 export class AppModule {}
