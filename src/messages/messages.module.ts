@@ -5,7 +5,7 @@ import { MessagesController } from './messages.controller';
 import { MessagesGateway } from './messages.gateway';
 import { Message, MessageSchema } from './schemas/messages.schema';
 import { ConversationsModule } from '../conversations/conversation.module';
-import { AuthModule } from '../auth/auth.module'; 
+import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [
     AuthModule,

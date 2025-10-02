@@ -7,7 +7,6 @@ import {
   Get,
   Param,
   Patch,
-  BadRequestException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -66,13 +65,19 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile/farmer')
-  async updateFarmerProfile(@Req() req: JwtRequest, @Body() dto: UpdateFarmerDto) {
+  async updateFarmerProfile(
+    @Req() req: JwtRequest,
+    @Body() dto: UpdateFarmerDto,
+  ) {
     return this.authService.updateFarmerProfile(req.user.userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile/buyer')
-  async updateBuyerProfile(@Req() req: JwtRequest, @Body() dto: UpdateBuyerDto) {
+  async updateBuyerProfile(
+    @Req() req: JwtRequest,
+    @Body() dto: UpdateBuyerDto,
+  ) {
     return this.authService.updateBuyerProfile(req.user.userId, dto);
   }
 
@@ -94,7 +99,6 @@ export class UserController {
   async updatePassword(@Req() req: JwtRequest, @Body() dto: UpdatePasswordDto) {
     return this.userService.updatePassword(req.user.userId, dto);
   }
-
 
   @Get('farmer/:id')
   async getSingleFarmer(@Param('id') id: string) {

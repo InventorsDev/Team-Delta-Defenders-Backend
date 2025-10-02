@@ -29,9 +29,8 @@ export class MessagesGateway implements OnGatewayConnection {
 
       const payload = this.jwtService.verify(token);
       (client as any).user = payload;
-      console.log(`Socket connected: ${payload.userId}`);
     } catch (err) {
-      console.log('Invalid token, disconnecting...');
+      console.log('Invalid token, disconnecting...', err);
       client.disconnect();
     }
   }

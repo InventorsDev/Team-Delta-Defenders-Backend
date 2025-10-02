@@ -32,7 +32,7 @@ import { MessagesModule } from './messages/messages.module';
   providers: [
     AppService,
     EnvironmentConfig,
-    
+
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

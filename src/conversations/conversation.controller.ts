@@ -27,7 +27,10 @@ export class ConversationController {
 
   // Create a new conversation
   @Post()
-  async createConversation(@Req() req: JwtRequest, @Body() dto: CreateConversationDto) {
+  async createConversation(
+    @Req() req: JwtRequest,
+    @Body() dto: CreateConversationDto,
+  ) {
     // Ensure the logged-in user is included in participants
     if (!dto.participants.includes(req.user.userId)) {
       dto.participants.push(req.user.userId);

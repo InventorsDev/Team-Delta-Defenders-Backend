@@ -10,7 +10,6 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  
   async create(data: Partial<User>): Promise<User> {
     const newUser = new this.userModel(data);
     return newUser.save();
@@ -24,7 +23,6 @@ export class UserService {
     return this.userModel.findById(id).exec();
   }
 
-  
   async getSettings(userId: string): Promise<Partial<User>> {
     const user = await this.userModel
       .findById(userId)
@@ -34,7 +32,6 @@ export class UserService {
     return user;
   }
 
- 
   async updateSettings(userId: string, dto: UpdateSettingsDto): Promise<User> {
     const user = await this.userModel.findByIdAndUpdate(
       userId,
@@ -45,13 +42,13 @@ export class UserService {
     return user;
   }
 
-  
   async updatePassword(userId: string, dto: UpdatePasswordDto): Promise<User> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new BadRequestException('User not found');
 
     const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
-    if (!isMatch) throw new BadRequestException('Current password is incorrect');
+    if (!isMatch)
+      throw new BadRequestException('Current password is incorrect');
 
     user.password = await bcrypt.hash(dto.newPassword, 10);
     return user.save();

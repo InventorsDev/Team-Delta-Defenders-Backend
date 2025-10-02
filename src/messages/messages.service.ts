@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message } from './schemas/messages.schema';
@@ -13,14 +17,15 @@ export class MessagesService {
 
   async create(conversationId: string, senderId: string, content: string) {
     // Check conversation exists
-    const conversation = await this.conversationsService.findById(conversationId);
+    const conversation =
+      await this.conversationsService.findById(conversationId);
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
     // Create new message
     const message = new this.messageModel({
-      conversationId: new Types.ObjectId(conversationId), 
+      conversationId: new Types.ObjectId(conversationId),
       sender: new Types.ObjectId(senderId),
       content,
     });
@@ -29,8 +34,8 @@ export class MessagesService {
 
     // Update last message in conversation
     await this.conversationsService.updateLastMessage(
-  conversationId,
-  (savedMessage._id as Types.ObjectId).toString(), 
+      conversationId,
+      (savedMessage._id as Types.ObjectId).toString(),
     );
 
     // Populate sender details
@@ -39,7 +44,7 @@ export class MessagesService {
 
   async findMessagesByConversation(conversationId: string) {
     return this.messageModel
-      .find({ conversation: new Types.ObjectId(conversationId) }) 
+      .find({ conversation: new Types.ObjectId(conversationId) })
       .populate('sender', 'name email')
       .sort({ createdAt: 1 })
       .exec();
@@ -52,7 +57,7 @@ export class MessagesService {
     }
 
     // Only sender can delete
-    if (!message.sender.equals(userId)) {  
+    if (!message.sender.equals(userId)) {
       throw new ForbiddenException('You cannot delete this message');
     }
 

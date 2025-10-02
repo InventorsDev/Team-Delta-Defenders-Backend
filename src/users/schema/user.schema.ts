@@ -15,7 +15,7 @@ export class User {
 
   @Prop({ required: true })
   password!: string;
-  
+
   // Settings
   @Prop({ default: 'en' })
   language!: string;

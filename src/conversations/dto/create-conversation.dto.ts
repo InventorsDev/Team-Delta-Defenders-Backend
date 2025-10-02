@@ -4,5 +4,5 @@ export class CreateConversationDto {
   @IsArray()
   @ArrayMinSize(2)
   @IsMongoId({ each: true })
-  participants!: string[];  
+  participants!: string[];
 }

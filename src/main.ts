@@ -31,15 +31,15 @@ async function bootstrap(): Promise<void> {
 
   // CORS configuration
   app.enableCors({
-  origin: [
-    'https://team-delta-defenders-frontend-git-cf296d-soundprince1s-projects.vercel.app',
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'http://localhost:8082'
-  ],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-});
+    origin: [
+      'https://team-delta-defenders-frontend-git-cf296d-soundprince1s-projects.vercel.app',
+      'http://localhost:8080',
+      'http://localhost:8081',
+      'http://localhost:8082',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
   // Global prefix
   app.setGlobalPrefix('api');

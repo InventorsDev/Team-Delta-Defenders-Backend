@@ -52,11 +52,12 @@ export class ConversationService {
     conversationId: string,
     messageId: string,
   ): Promise<Conversation> {
-    const conversation = await this.conversationModel.findByIdAndUpdate(
-      conversationId,
-      { lastMessage: new Types.ObjectId(messageId) },
-      { new: true },
-    )
+    const conversation = await this.conversationModel
+      .findByIdAndUpdate(
+        conversationId,
+        { lastMessage: new Types.ObjectId(messageId) },
+        { new: true },
+      )
       .populate('participants', 'name email')
       .populate({
         path: 'lastMessage',
