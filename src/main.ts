@@ -31,7 +31,8 @@ async function bootstrap(): Promise<void> {
 
   // CORS configuration
   app.enableCors({
-    origin: envConfig.frontendUrl,
+    origin: 'https://team-delta-defenders-frontend-git-cf296d-soundprince1s-projects.vercel.app',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 

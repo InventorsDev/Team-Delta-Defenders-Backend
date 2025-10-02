@@ -19,19 +19,16 @@ export class MessagesGateway implements OnGatewayConnection {
     private readonly jwtService: JwtService,
   ) {}
 
-  
   async handleConnection(client: Socket) {
     try {
       const token =
         client.handshake.auth?.token ||
         client.handshake.headers.authorization?.split(' ')[1];
 
-      if (!token) {
-        throw new Error('No token provided');
-      }
+      if (!token) throw new Error('No token provided');
 
       const payload = this.jwtService.verify(token);
-      (client as any).user = payload; 
+      (client as any).user = payload;
       console.log(`Socket connected: ${payload.userId}`);
     } catch (err) {
       console.log('Invalid token, disconnecting...');
@@ -53,7 +50,7 @@ export class MessagesGateway implements OnGatewayConnection {
     @MessageBody() data: { conversationId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const user = (client as any).user; 
+    const user = (client as any).user;
     if (!user) {
       client.emit('error', 'Unauthorized');
       return;
@@ -61,7 +58,7 @@ export class MessagesGateway implements OnGatewayConnection {
 
     const message = await this.messagesService.create(
       data.conversationId,
-      user.userId, 
+      user.userId,
       data.content,
     );
 

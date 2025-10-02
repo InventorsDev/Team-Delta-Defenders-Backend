@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { EnvironmentConfig } from './common/config/environment.config';
 import { getEnvVar } from './common/utils/type.utils';
 import { ListingModule } from './Listing/listing.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -24,17 +25,18 @@ import { ListingModule } from './Listing/listing.module';
     AuthModule,
     UserModule,
     ListingModule,
+    MessagesModule,
     ConversationsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     EnvironmentConfig,
-    // Uncomment the following lines to enable global JWT authentication guard
-    //{
-    //   provide: APP_GUARD,
-    //   useClass: JwtAuthGuard,
-    // },
+    
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

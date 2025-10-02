@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { User, UserSchema } from './schemas/user.schema';
+import { User, UserSchema } from '../users/schema/user.schema';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { EnvironmentConfig } from '../common/config/environment.config';
 import { ConfigModule } from '../common/config/config.module';
@@ -25,6 +25,6 @@ import { ConfigModule } from '../common/config/config.module';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtStrategy, JwtModule],
 })
 export class AuthModule {}
