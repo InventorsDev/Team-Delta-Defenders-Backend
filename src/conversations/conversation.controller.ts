@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 
@@ -27,14 +27,18 @@ export class ConversationController {
 
   // Create a new conversation
   @Post()
-  async createConversation(@Body() dto: CreateConversationDto) {
+  async createConversation(@Req() req: JwtRequest, @Body() dto: CreateConversationDto) {
+    // Ensure the logged-in user is included in participants
+    if (!dto.participants.includes(req.user.userId)) {
+      dto.participants.push(req.user.userId);
+    }
     return this.conversationsService.create(dto);
   }
 
   // Get conversations for the current logged-in user
   @Get('my')
   async getUserConversations(@Req() req: JwtRequest) {
-    return this.conversationsService.findUserConversation(req.user.userId);
+    return this.conversationsService.findUserConversations(req.user.userId);
   }
 
   // Get a single conversation by ID

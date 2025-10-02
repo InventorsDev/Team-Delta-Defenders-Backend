@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsEmail, IsBoolean } from 'class-validator';
 export class UpdateSettingsDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  fullName?: string;
 
   @IsOptional()
   @IsEmail()

@@ -11,6 +11,7 @@ export class ConversationService {
     private conversationModel: Model<Conversation>,
   ) {}
 
+  // Create a new conversation
   async create(
     createConversationDto: CreateConversationDto,
   ): Promise<Conversation> {
@@ -18,23 +19,35 @@ export class ConversationService {
     return conversation.save();
   }
 
+  // Find conversation by ID
   async findById(id: string): Promise<Conversation> {
     const conversation = await this.conversationModel
       .findById(id)
-      .populate('participants', 'name email');
+      .populate('participants', 'name email')
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'sender', select: 'name email' },
+      });
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
     return conversation;
   }
 
-  async findUserConversation(userId: string): Promise<Conversation[]> {
+  // Find all conversations for a user
+  async findUserConversations(userId: string): Promise<Conversation[]> {
     return this.conversationModel
       .find({ participants: new Types.ObjectId(userId) })
       .populate('participants', 'name email')
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'sender', select: 'name email' },
+      })
+      .sort({ updatedAt: -1 }) // latest updated first
       .exec();
   }
 
+  // Update the last message of a conversation
   async updateLastMessage(
     conversationId: string,
     messageId: string,
@@ -43,7 +56,12 @@ export class ConversationService {
       conversationId,
       { lastMessage: new Types.ObjectId(messageId) },
       { new: true },
-    );
+    )
+      .populate('participants', 'name email')
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'sender', select: 'name email' },
+      });
 
     if (!conversation) {
       throw new NotFoundException('Conversation not found');

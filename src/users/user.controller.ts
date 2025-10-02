@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthService } from '../auth/auth.service';
 import { FarmerSignUpDto } from '../auth/dto/farmer-signup.dto';
 import { BuyerSignUpDto } from '../auth/dto/buyer-signup.dto';

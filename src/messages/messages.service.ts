@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message } from './schemas/messages.schema';
@@ -12,32 +12,34 @@ export class MessagesService {
   ) {}
 
   async create(conversationId: string, senderId: string, content: string) {
-  
-    
+    // Check conversation exists
     const conversation = await this.conversationsService.findById(conversationId);
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
-    
+    // Create new message
     const message = new this.messageModel({
-      conversationId: new Types.ObjectId(conversationId),
+      conversationId: new Types.ObjectId(conversationId), 
       sender: new Types.ObjectId(senderId),
       content,
     });
-   const savedMessage = await message.save() as Message; // cast to Message
+
+    const savedMessage = await message.save();
+
+    // Update last message in conversation
     await this.conversationsService.updateLastMessage(
-     conversationId,
-     (savedMessage._id as Types.ObjectId).toString()
+  conversationId,
+  (savedMessage._id as Types.ObjectId).toString(), 
     );
 
-
-    return savedMessage.populate('sender', 'name email');
+    // Populate sender details
+    return await savedMessage.populate('sender', 'name email');
   }
 
   async findMessagesByConversation(conversationId: string) {
     return this.messageModel
-      .find({ conversationId: new Types.ObjectId(conversationId) })
+      .find({ conversation: new Types.ObjectId(conversationId) }) 
       .populate('sender', 'name email')
       .sort({ createdAt: 1 })
       .exec();
@@ -49,9 +51,9 @@ export class MessagesService {
       throw new NotFoundException('Message not found');
     }
 
-  
-    if (message.sender.toString() !== userId) {
-      throw new NotFoundException('You cannot delete this message');
+    // Only sender can delete
+    if (!message.sender.equals(userId)) {  
+      throw new ForbiddenException('You cannot delete this message');
     }
 
     await message.deleteOne();
