@@ -18,7 +18,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Public } from '../common/decorators/public.decorator';
-import { UserRole } from '../auth/schemas/user.schema';
+import { UserRole } from '../users/schema/user.schema';
 import {
   CreateListingDto,
   UpdateListingDto,

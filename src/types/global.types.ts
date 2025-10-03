@@ -1,5 +1,5 @@
 import { type Document } from 'mongoose';
-import { type UserRole } from '../auth/schemas/user.schema';
+import { type UserRole } from '../users/schema/user.schema';
 
 // Base Mongoose Document types
 export type MongooseDocument<T> = T & Document;
@@ -26,6 +26,12 @@ export interface AuthResponse {
     role: UserRole;
     availableRoles: UserRole[];
     currentRole: UserRole;
+    language: string;
+    notifications: {
+      email: boolean;
+      sms: boolean;
+      push: boolean;
+    };
   };
 }
 

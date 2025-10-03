@@ -18,6 +18,10 @@ export class BuyerSignUpDto {
 
   @IsNotEmpty()
   @IsString()
+  houseAddress!: string;
+
+  @IsNotEmpty()
+  @IsString()
   @MinLength(6)
   password!: string;
 }

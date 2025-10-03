@@ -15,7 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { UserRole } from '../auth/schemas/user.schema';
+import { UserRole } from '../users/schema/user.schema';
 import { FileUploadService } from './file-upload.service';
 import type { UserPayload, ApiResponse } from '../types/global.types';
 

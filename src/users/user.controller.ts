@@ -1,66 +1,42 @@
 import {
   Controller,
-  Post,
-  Body,
-  Req,
-  UseGuards,
   Get,
-  Param,
   Patch,
+  Param,
+  Body,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
-import type { Request } from 'express';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { AuthService } from '../auth/auth.service';
-import { FarmerSignUpDto } from '../auth/dto/farmer-signup.dto';
-import { BuyerSignUpDto } from '../auth/dto/buyer-signup.dto';
+import { UserService } from './user.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateFarmerDto } from '../auth/dto/update-farmer.dto';
 import { UpdateBuyerDto } from '../auth/dto/update-buyer.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { UserService } from './user.service';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import type { Request } from 'express';
 
 interface JwtRequest extends Request {
   user: {
-    userId: string;
-    email?: string;
+    id: string;
     role: string;
   };
 }
 
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
-  // Signup & Login
-  @Post('farmer-signup')
-  async farmerSignUp(@Body() dto: FarmerSignUpDto) {
-    return this.authService.farmerSignUp(dto);
-  }
-
-  @Post('buyer-signup')
-  async buyerSignUp(@Body() dto: BuyerSignUpDto) {
-    return this.authService.buyerSignUp(dto);
-  }
-
-  @Post('login')
-  async login(@Body() dto: { email: string; password: string }) {
-    return this.authService.signIn(dto.email, dto.password);
-  }
-
-  // Profiles
+  // PROFILE ROUTES
   @UseGuards(JwtAuthGuard)
   @Get('profile/farmer')
   async getFarmerProfile(@Req() req: JwtRequest) {
-    return this.authService.getFarmerProfile(req.user.userId);
+    return this.userService.getFarmerProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile/buyer')
   async getBuyerProfile(@Req() req: JwtRequest) {
-    return this.authService.getBuyerProfile(req.user.userId);
+    return this.userService.getBuyerProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -69,7 +45,7 @@ export class UserController {
     @Req() req: JwtRequest,
     @Body() dto: UpdateFarmerDto,
   ) {
-    return this.authService.updateFarmerProfile(req.user.userId, dto);
+    return this.userService.updateFarmerProfile(req.user.id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -78,35 +54,50 @@ export class UserController {
     @Req() req: JwtRequest,
     @Body() dto: UpdateBuyerDto,
   ) {
-    return this.authService.updateBuyerProfile(req.user.userId, dto);
+    return this.userService.updateBuyerProfile(req.user.id, dto);
   }
 
-  // Settings
+  // SETTINGS ROUTES
   @UseGuards(JwtAuthGuard)
   @Get('settings')
   async getSettings(@Req() req: JwtRequest) {
-    return this.userService.getSettings(req.user.userId);
+    return this.userService.getSettings(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('settings')
   async updateSettings(@Req() req: JwtRequest, @Body() dto: UpdateSettingsDto) {
-    return this.userService.updateSettings(req.user.userId, dto);
+    return this.userService.updateSettings(req.user.id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('settings/password')
   async updatePassword(@Req() req: JwtRequest, @Body() dto: UpdatePasswordDto) {
-    return this.userService.updatePassword(req.user.userId, dto);
+    return this.userService.updatePassword(req.user.id, dto);
   }
 
-  @Get('farmer/:id')
+  // USER FETCHING ROUTES
+  @UseGuards(JwtAuthGuard)
+  @Get('farmers')
+  async getAllFarmers() {
+    return this.userService.getAllFarmers();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('buyers')
+  async getAllBuyers() {
+    return this.userService.getAllBuyers();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('farmers/:id')
   async getSingleFarmer(@Param('id') id: string) {
-    return this.authService.getSingleFarmer(id);
+    return this.userService.getSingleFarmer(id);
   }
 
-  @Get('buyer/:id')
+  @UseGuards(JwtAuthGuard)
+  @Get('buyers/:id')
   async getSingleBuyer(@Param('id') id: string) {
-    return this.authService.getSingleBuyer(id);
+    return this.userService.getSingleBuyer(id);
   }
 }

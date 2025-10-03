@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UserRole } from '../schemas/user.schema';
+import { UserRole } from '../../users/schema/user.schema';
 
 export class SwitchRoleDto {
   @IsEnum(UserRole)
