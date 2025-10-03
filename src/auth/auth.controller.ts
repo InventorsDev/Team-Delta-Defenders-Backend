@@ -123,8 +123,11 @@ export class AuthController {
   @Get('farmer-dashboard')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.FARMER)
-  farmerDashboard(@CurrentUser() user: UserPayload): ApiResponse {
-    return { message: `Welcome to farmer dashboard, ${user.id}!` };
+  async farmerDashboard(
+    @CurrentUser() user: UserPayload,
+  ): Promise<ApiResponse> {
+    const farmer = await this.authService.getFarmerProfile(user.id);
+    return { message: `Welcome to farmer dashboard, ${farmer.businessName}!` };
   }
 
   @Get('buyer-dashboard')
