@@ -4,6 +4,8 @@ import {
   UnauthorizedException,
   NotFoundException,
   ConflictException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -34,29 +36,41 @@ export class AuthService {
   ) {}
 
   async farmerSignUp(dto: FarmerSignUpDto): Promise<ApiResponse> {
-    const existingUser = await this.userModel
-      .findOne({ email: dto.email })
-      .exec();
+    const {
+      fullName,
+      phone,
+      email,
+      state,
+      farmAddress,
+      businessName,
+      password,
+    } = dto;
+
+    const existingUser = await this.userModel.findOne({ email });
     if (existingUser) {
-      throw new BadRequestException('Email already in use');
+      throw new HttpException(
+        'User with this email already exists',
+        HttpStatus.CONFLICT,
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = new this.userModel({
-      fullName: dto.fullName,
-      phone: dto.phone,
-      email: dto.email,
-      state: dto.state,
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.userModel.create({
+      fullName,
+      phone,
+      email,
+      state,
       password: hashedPassword,
       roles: [UserRole.FARMER],
       currentRole: UserRole.FARMER,
-      farmerData: { farmAddress: dto.farmAddress },
-      language: 'en',
-      notifications: { email: true, sms: false, push: true },
+      farmerData: {
+        farmAddress,
+        businessName,
+      },
     });
 
-    await user.save();
-    return { message: 'Farmer registered successfully' };
+    return { message: 'Farmer signed up successfully' };
   }
 
   async buyerSignUp(dto: BuyerSignUpDto): Promise<ApiResponse> {
@@ -245,7 +259,7 @@ export class AuthService {
     user.roles.push(UserRole.FARMER);
     user.farmerData = {
       farmAddress: dto.farmAddress,
-      businessName: dto.businessName,
+      businessName: dto.businessName ?? '',
     };
 
     Object.assign(user, updateFields);
@@ -337,6 +351,14 @@ export class AuthService {
         notifications: user.notifications,
       },
     };
+  }
+
+  async getFarmerProfile(userId: string): Promise<{ businessName: string }> {
+    const user = await this.userModel.findById(userId);
+    if (!user || !user.farmerData || !user.farmerData.businessName) {
+      throw new HttpException('Farmer profile not found', HttpStatus.NOT_FOUND);
+    }
+    return { businessName: user.farmerData.businessName };
   }
 
   async forgotPassword(email: string): Promise<ApiResponse> {

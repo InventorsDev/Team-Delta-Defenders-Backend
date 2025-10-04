@@ -12,8 +12,8 @@ export class FarmerData {
   @Prop({ required: true })
   farmAddress!: string;
 
-  @Prop()
-  businessName?: string;
+  @Prop({ required: true })
+  businessName!: string;
 }
 
 @Schema({ _id: false })

@@ -22,6 +22,11 @@ export class FarmerSignUpDto {
 
   @IsNotEmpty()
   @IsString()
+  @MinLength(2)
+  businessName!: string;
+
+  @IsNotEmpty()
+  @IsString()
   @MinLength(6)
   password!: string;
 }
