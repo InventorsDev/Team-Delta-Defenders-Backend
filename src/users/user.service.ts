@@ -23,16 +23,26 @@ export class UserService {
   async getAllFarmers(): Promise<{ farmers: any[] }> {
     const farmers = await this.userModel
       .find({ roles: 'farmer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state farmerData.businessName farmerData.farmAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
-    return { farmers: farmers.map((farmer) => extractUserData(farmer)) };
+    return {
+      farmers: farmers.map((farmer) => ({
+        ...extractUserData(farmer),
+        businessName: farmer.farmerData?.businessName,
+        farmAddress: farmer.farmerData?.farmAddress,
+      })),
+    };
   }
 
   async getAllBuyers(): Promise<{ buyers: any[] }> {
     const buyers = await this.userModel
       .find({ roles: 'buyer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state buyerData.houseAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     return { buyers: buyers.map((buyer) => extractUserData(buyer)) };
@@ -41,20 +51,30 @@ export class UserService {
   async getSingleFarmer(id: string): Promise<{ farmer: any }> {
     const farmer = await this.userModel
       .findOne({ _id: id, roles: 'farmer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state farmerData.businessName farmerData.farmAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     if (!farmer) {
       throw new NotFoundException('Farmer not found');
     }
 
-    return { farmer: extractUserData(farmer) };
+    return {
+      farmer: {
+        ...extractUserData(farmer),
+        businessName: farmer.farmerData?.businessName,
+        farmAddress: farmer.farmerData?.farmAddress,
+      },
+    };
   }
 
   async getSingleBuyer(id: string): Promise<{ buyer: any }> {
     const buyer = await this.userModel
       .findOne({ _id: id, roles: 'buyer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state buyerData.houseAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     if (!buyer) {
@@ -67,20 +87,30 @@ export class UserService {
   async getFarmerProfile(userId: string): Promise<{ farmer: any }> {
     const farmer = await this.userModel
       .findOne({ _id: userId, roles: 'farmer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state farmerData.businessName farmerData.farmAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     if (!farmer) {
       throw new NotFoundException('Farmer profile not found');
     }
 
-    return { farmer: extractUserData(farmer) };
+    return {
+      farmer: {
+        ...extractUserData(farmer),
+        businessName: farmer.farmerData?.businessName,
+        farmAddress: farmer.farmerData?.farmAddress,
+      },
+    };
   }
 
   async getBuyerProfile(userId: string): Promise<{ buyer: any }> {
     const buyer = await this.userModel
       .findOne({ _id: userId, roles: 'buyer' })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state buyerData.houseAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     if (!buyer) {
@@ -108,15 +138,27 @@ export class UserService {
     if (dto.state) updateFields.state = dto.state;
     if (dto.farmAddress)
       updateFields['farmerData.farmAddress'] = dto.farmAddress;
+    if (dto.businessName)
+      updateFields['farmerData.businessName'] = dto.businessName;
 
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state farmerData.businessName farmerData.farmAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException('Farmer not found');
+    }
 
     return {
       message: 'Farmer profile updated successfully',
-      data: extractUserData(updatedUser!),
+      data: {
+        ...extractUserData(updatedUser),
+        businessName: updatedUser.farmerData?.businessName,
+        farmAddress: updatedUser.farmerData?.farmAddress,
+      },
     };
   }
 
@@ -139,7 +181,9 @@ export class UserService {
 
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(
+        'fullName phone email state buyerData.houseAddress roles currentRole createdAt updatedAt',
+      )
       .exec();
 
     return {

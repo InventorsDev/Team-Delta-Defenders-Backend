@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateFarmerDto {
   @IsOptional()
@@ -16,4 +16,9 @@ export class UpdateFarmerDto {
   @IsOptional()
   @IsString()
   farmAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  businessName!: string;
 }
