@@ -32,6 +32,7 @@ async function bootstrap(): Promise<void> {
   // CORS configuration
   app.enableCors({
     origin: [
+      'https://team-delta-defenders-frontend-git-cf296d-soundprince1s-projects.vercel.app',
       'https://agrilink-delta-defenders.vercel.app/',
       'http://localhost:8080',
       'http://localhost:8081',
